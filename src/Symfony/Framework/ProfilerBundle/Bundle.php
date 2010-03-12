@@ -1,8 +1,11 @@
 <?php
 
-namespace Symfony\Framework\WebBundle\Debug\DataCollector;
+namespace Symfony\Framework\ProfilerBundle;
 
+use Symfony\Foundation\Bundle\Bundle as BaseBundle;
 use Symfony\Components\DependencyInjection\ContainerInterface;
+use Symfony\Components\DependencyInjection\Loader\Loader;
+use Symfony\Framework\ProfilerBundle\DependencyInjection\ProfilerExtension;
 
 /*
  * This file is part of the symfony framework.
@@ -19,18 +22,10 @@ use Symfony\Components\DependencyInjection\ContainerInterface;
  * @package    symfony
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
  */
-abstract class DataCollector implements DataCollectorInterface
+class Bundle extends BaseBundle
 {
-  protected $manager;
-  protected $container;
-
-  public function __construct(ContainerInterface $container)
+  public function buildContainer(ContainerInterface $container)
   {
-    $this->container = $container;
-  }
-
-  public function setCollectorManager(DataCollectorManager $manager)
-  {
-    $this->manager = $manager;
+    Loader::registerExtension(new ProfilerExtension());
   }
 }

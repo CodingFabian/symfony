@@ -1,10 +1,11 @@
 <?php
 
-namespace Symfony\Framework\WebBundle\Debug\DataCollector;
+namespace Symfony\Framework\ProfilerBundle\DataCollector;
 
 use Symfony\Components\DependencyInjection\ContainerInterface;
 use Symfony\Components\EventDispatcher\Event;
 use Symfony\Components\RequestHandler\Response;
+use Symfony\Framework\ProfilerBundle\ProfilerStorage;
 
 /*
  * This file is part of the symfony framework.
@@ -24,21 +25,47 @@ use Symfony\Components\RequestHandler\Response;
 class DataCollectorManager
 {
   protected $container;
-  protected $token;
-  protected $data;
+  protected $profilerStorage;
   protected $collectors;
   protected $response;
+  protected $lifetime;
 
-  public function __construct(ContainerInterface $container)
+  public function __construct(ContainerInterface $container, ProfilerStorage $profilerStorage, $lifetime = 86400)
   {
     $this->container = $container;
-    $this->token = uniqid();
+    $this->lifetime = $lifetime;
+    $this->profilerStorage = $profilerStorage;
     $this->collectors = $this->initCollectors();
   }
 
   public function register()
   {
     $this->container->getEventDispatcherService()->connect('core.response', array($this, 'handle'));
+  }
+
+  public function handle(Event $event, Response $response)
+  {
+    if (!$event->getParameter('main_request'))
+    {
+      return $response;
+    }
+
+    $this->response = $response;
+
+    $data = array();
+    foreach ($this->collectors as $name => $collector)
+    {
+      $data[$name] = $collector->getData();
+    }
+    $this->profilerStorage->write($data);
+    $this->profilerStorage->purge($this->lifetime);
+
+    return $response;
+  }
+
+  public function getProfilerStorage()
+  {
+    return $this->profilerStorage;
   }
 
   public function getResponse()
@@ -53,7 +80,7 @@ class DataCollectorManager
 
   public function initCollectors()
   {
-    $config = $this->container->findAnnotatedServiceIds('debug.collector');
+    $config = $this->container->findAnnotatedServiceIds('data_collector');
     $ids = array();
     $coreColectors = array();
     $userCollectors = array();
@@ -73,37 +100,5 @@ class DataCollectorManager
     }
 
     return $this->collectors = array_merge($coreColectors, $userCollectors);
-  }
-
-  public function getData($name = null)
-  {
-    if (null === $name)
-    {
-      return $this->data;
-    }
-
-    return isset($this->data[$name]) ? $this->data[$name] : null;
-  }
-
-  public function handle(Event $event, Response $response)
-  {
-    if (!$event->getParameter('main_request'))
-    {
-      return $response;
-    }
-
-    $this->response = $response;
-
-    foreach ($this->collectors as $name => $collector)
-    {
-      $this->data[$name] = $collector->collect();
-    }
-
-    return $response;
-  }
-
-  public function getToken()
-  {
-    return $this->token;
   }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace Symfony\Framework\WebBundle\Debug\DataCollector;
+namespace Symfony\Framework\ProfilerBundle\DataCollector;
 
 /*
  * This file is part of the symfony framework.
@@ -21,7 +21,7 @@ interface DataCollectorInterface
 {
   public function setCollectorManager(DataCollectorManager $manager);
 
-  public function collect();
+  public function getData();
 
   public function getName();
 }

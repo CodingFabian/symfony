@@ -1,6 +1,6 @@
 <?php
 
-namespace Symfony\Framework\WebBundle\Debug\DataCollector;
+namespace Symfony\Framework\ProfilerBundle\DataCollector;
 
 use Symfony\Foundation\Kernel;
 
@@ -21,14 +21,12 @@ use Symfony\Foundation\Kernel;
  */
 class ConfigDataCollector extends DataCollector
 {
-  protected $data;
-
-  public function collect()
+  protected function collect()
   {
     $kernel = $this->container->getKernelService();
 
-    return $this->data = array(
-      'token'           => $this->manager->getToken(),
+    return array(
+      'token'           => $this->manager->getProfilerStorage()->getToken(),
       'symfony_version' => Kernel::VERSION,
       'name'            => $kernel->getName(),
       'env'             => $kernel->getEnvironment(),
